@@ -1,0 +1,44 @@
+services:
+
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: devos-lgtm
+
+    ports:
+      - "3000:3000"
+      - "4317:4317"
+      - "4318:4318"
+
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+
+    volumes:
+      - ./grafana/dashboards:/devos-dashboards
+      - ./grafana/provisioning/dashboards/devos.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/devos.yaml
+      - ./grafana/provisioning/alerting:/otel-lgtm/grafana/conf/provisioning/alerting
+
+  devos-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: devos-collector
+
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol/config.yaml
+      - ~/.claude:/claude-data
+
+    command: ["--config=/etc/otelcol/config.yaml"]
+
+    depends_on:
+      - lgtm
+
+  devos-webhook:
+    build: ./webhook
+    container_name: devos-webhook
+
+    ports:
+      - "8085:8080"
+
+    volumes:
+      - ./data/alerts:/data
+
+    environment:
+      ALERTS_FILE: /data/alerts.jsonl

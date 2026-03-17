@@ -1,0 +1,12 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: devos-webhook
+    receivers:
+      - uid: webhook-alerts
+        type: webhook
+        settings:
+          url: "http://devos-webhook:8080"
+          httpMethod: POST
+        disableResolveMessage: false

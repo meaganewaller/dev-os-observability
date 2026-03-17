@@ -1,0 +1,5 @@
+brew 'docker'
+brew 'docker-compose'
+brew 'colima'
+brew 'jq'
+brew 'grafana'

@@ -1,0 +1,89 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: DevOS Alerts
+    folder: DevOS
+    interval: 1m
+    rules:
+      - uid: friction-spike
+        title: Friction Spike
+        condition: threshold
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: sum(count_over_time({service_name="devos"} | log_source="friction" [1h]))
+              instant: true
+              refId: A
+          - refId: threshold
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 20
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: Friction spike detected
+          description: More than 20 friction events in the last hour
+        labels:
+          severity: warning
+        isPaused: false
+
+      - uid: adr0008-breach
+        title: "ADR-0008: Resource Limit Breach"
+        condition: threshold
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 604800
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: sum(count_over_time({service_name="devos"} | log_source="friction" | subdomain="resource-limit" [7d]))
+              instant: true
+              refId: A
+          - refId: threshold
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 50
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+              refId: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: ADR-0008 target breached
+          description: Weekly resource-limit errors exceeded 50
+        labels:
+          severity: critical
+        isPaused: false

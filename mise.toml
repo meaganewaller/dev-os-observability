@@ -1,0 +1,41 @@
+[tasks.brew]
+description = "Install system dependencies via Brewfile"
+run = "brew bundle"
+
+[tasks.colima-start]
+description = "Start container runtime"
+run = "colima start"
+
+[tasks.colima-stop]
+description = "Stop container runtime"
+run = "colima stop"
+
+[tasks.up]
+description = "Start Dev OS observability stack"
+run = "docker compose up -d"
+
+[tasks.down]
+description = "Stop observability stack"
+run = "docker compose down"
+
+[tasks.logs]
+description = "Tail container logs"
+run = "docker logs devos-lgtm -f"
+
+[tasks.ps]
+description = "Show containers"
+run = "docker ps"
+
+[tasks.events]
+description = "Tail Dev OS event stream"
+run = "tail -f ~/.claude/dev-os-events.jsonl"
+
+[tasks.test-event]
+description = "Emit test Dev OS event"
+run = """
+echo '{"timestamp":"2026-03-16T12:00:00Z","event_type":"test_event","repo":"dev-os"}' >> ~/.claude/dev-os-events.jsonl
+"""
+
+[tasks.grafana]
+description = "Open Grafana"
+run = "open http://localhost:3000"

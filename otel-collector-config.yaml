@@ -1,0 +1,48 @@
+receivers:
+  filelog/devos:
+    include:
+      - /claude-data/dev-os-events.jsonl
+    start_at: end
+    operators:
+      - type: json_parser
+        parse_from: body
+      - type: add
+        field: attributes.log_source
+        value: dev-os-events
+
+  filelog/friction:
+    include:
+      - /claude-data/skill-friction-log.jsonl
+    start_at: end
+    operators:
+      - type: json_parser
+        parse_from: body
+      - type: add
+        field: attributes.log_source
+        value: friction
+
+processors:
+
+  resource/devos:
+    attributes:
+      - key: service.name
+        value: devos
+        action: upsert
+
+  batch:
+
+exporters:
+  otlp:
+    endpoint: devos-lgtm:4317
+    tls:
+      insecure: true
+
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog/devos, filelog/friction]
+      processors: [resource/devos, batch]
+      exporters: [otlp, debug]
