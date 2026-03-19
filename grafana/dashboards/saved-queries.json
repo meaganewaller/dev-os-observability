@@ -1,0 +1,355 @@
+{
+  "uid": "devos-saved-queries",
+  "title": "Saved Queries",
+  "tags": ["devos", "queries"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "annotations": {
+    "list": []
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "timerange",
+        "type": "custom",
+        "current": {
+          "text": "1h",
+          "value": "1h"
+        },
+        "options": [
+          {"text": "15m", "value": "15m"},
+          {"text": "1h", "value": "1h"},
+          {"text": "6h", "value": "6h"},
+          {"text": "24h", "value": "24h"},
+          {"text": "7d", "value": "7d"}
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Quick Reference",
+      "type": "text",
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+      "options": {
+        "mode": "markdown",
+        "content": "## Saved Queries\nClick any panel title → **Explore** to modify the query. Use the `$timerange` variable dropdown above to adjust time windows.\n\n| Query | Use When |\n|-------|----------|\n| Recent Friction | Something went wrong, want to see what |\n| Resource Limits | Checking ADR-0008 compliance |\n| Session Timeline | Understanding work patterns |\n| Reversals | Investigating quality issues |"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Recent Friction Events",
+      "description": "Latest friction events with full details. Click to explore.",
+      "type": "logs",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"devos\"} | log_source=\"friction\" | json",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Resource Limit Errors (ADR-0008)",
+      "description": "File too large, token limits - target <50/week",
+      "type": "logs",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"devos\"} | log_source=\"friction\" | json | subdomain=\"resource-limit\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Friction Count by Subdomain",
+      "description": "What types of friction are occurring?",
+      "type": "piechart",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 12},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (subdomain) (count_over_time({service_name=\"devos\"} | log_source=\"friction\" | json [$__range]))",
+          "queryType": "instant",
+          "legendFormat": "{{subdomain}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "pie",
+        "tooltip": {"mode": "single"}
+      }
+    },
+    {
+      "id": 5,
+      "title": "Session Timeline",
+      "description": "When sessions started and ended",
+      "type": "logs",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 12},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=~\"session_start|session_end\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Event Counts by Type",
+      "description": "Distribution of all event types",
+      "type": "piechart",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 12},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (event_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json [$__range]))",
+          "queryType": "instant",
+          "legendFormat": "{{event_type}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "pie"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Recent Reversals",
+      "description": "Work that was undone - investigate quality issues",
+      "type": "logs",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 20},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"reversal\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 8,
+      "title": "Large Changes",
+      "description": "Flagged large file modifications",
+      "type": "logs",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 20},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"large_change\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 9,
+      "title": "Tool Failures",
+      "description": "Recent tool operation failures",
+      "type": "logs",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 27},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 10,
+      "title": "Test Runs",
+      "description": "When tests were executed",
+      "type": "logs",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 27},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"test_run\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 11,
+      "title": "Cue Activity",
+      "description": "Cues fired and matched",
+      "type": "logs",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 34},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=~\"cue_fired|cue_matched\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 12,
+      "title": "Decision Tradeoffs",
+      "description": "Captured architectural decisions",
+      "type": "logs",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 34},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tradeoff_auto_capture\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 13,
+      "title": "Activity Over Time",
+      "description": "All events timeline",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 41},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (event_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json [$__interval]))",
+          "queryType": "range",
+          "legendFormat": "{{event_type}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {"mode": "normal"}
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Friction Over Time",
+      "description": "Friction events by subdomain",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 49},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (subdomain) (count_over_time({service_name=\"devos\"} | log_source=\"friction\" | json [$__interval]))",
+          "queryType": "range",
+          "legendFormat": "{{subdomain}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {"mode": "normal"}
+          },
+          "color": {"mode": "palette-classic"}
+        }
+      }
+    }
+  ]
+}
