@@ -1,0 +1,418 @@
+{
+  "uid": "devos-collaboration",
+  "title": "DevOS: Collaboration Insights",
+  "description": "How human and AI work together - session patterns, skills applied, and interaction styles",
+  "tags": ["devos", "collaboration"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "1m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Session Patterns",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "title": "Session Archetypes",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Distribution of session types: sprint (focused burst), flow (steady work), marathon (long session)",
+      "targets": [
+        {
+          "expr": "sum by (archetype) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_duration\" | archetype!=\"\" [$__range]))",
+          "legendFormat": "{{archetype}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "donut"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Session Duration Categories",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "How long sessions last: quick (<5m), short (5-15m), medium (15-60m), long (1-4h), marathon (4h+)",
+      "targets": [
+        {
+          "expr": "sum by (duration_category) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_end\" | duration_category!=\"\" [$__range]))",
+          "legendFormat": "{{duration_category}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "donut"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Task List Usage",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Sessions that used task lists for planning",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_duration\" | has_task_list=\"true\" [$__range]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "blue", "mode": "fixed" },
+          "displayName": "With Task List"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Total Sessions",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_start\" [$__range]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "green", "mode": "fixed" },
+          "displayName": "Sessions"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Avg Writes/Session",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Average file writes per session (throughput indicator)",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_start\" [$__range]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "color": { "fixedColor": "purple", "mode": "fixed" },
+          "displayName": "Writes/Session"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Avg Tests/Session",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Average test runs per session",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"test_run\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_start\" [$__range]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "color": { "fixedColor": "orange", "mode": "fixed" },
+          "displayName": "Tests/Session"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Work Categories",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "collapsed": false
+    },
+    {
+      "id": 9,
+      "title": "Change Types",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 10 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Categories of work: architecture, bugfix, feature, refactor, test, docs",
+      "targets": [
+        {
+          "expr": "sum by (change_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type!=\"\" [$__range]))",
+          "legendFormat": "{{change_type}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "pie"
+      }
+    },
+    {
+      "id": 10,
+      "title": "Risk Profile",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 10 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Risk levels of changes made",
+      "targets": [
+        {
+          "expr": "sum by (risk) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | risk!=\"\" [$__range]))",
+          "legendFormat": "{{risk}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "pie"
+      }
+    },
+    {
+      "id": 11,
+      "title": "Change Types Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "How work categories change over time",
+      "targets": [
+        {
+          "expr": "sum by (change_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type!=\"\" [$__interval]))",
+          "legendFormat": "{{change_type}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": { "mode": "normal" },
+            "fillOpacity": 80
+          },
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Guidance & Learning",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "collapsed": false
+    },
+    {
+      "id": 13,
+      "title": "Cues Fired",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 19 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Contextual guidance injections",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_fired\" [$__range]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "orange", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Skills Invoked",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 19 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Explicit skill invocations",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"skill_invoked\" [$__range]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "blue", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "id": 15,
+      "title": "Domain Modeling",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 19 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Domain modeling sessions",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"domain_modeling\" [$__range]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "purple", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "id": 16,
+      "title": "Cue Efficiency",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 19 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Cues fired per match (lower = better targeting)",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_fired\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_matched\" [$__range]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 5,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 2 },
+              { "color": "red", "value": 3 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 17,
+      "title": "Top Cues Fired",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 19 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Which cues provide the most guidance",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (cue_id) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_fired\" [$__range])))",
+          "legendFormat": "{{cue_id}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 18,
+      "title": "Cue Triggers by Type",
+      "type": "piechart",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 23 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "What triggers cue activation: prompt, bash, tool, etc.",
+      "targets": [
+        {
+          "expr": "sum by (trigger_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_fired\" | trigger_type!=\"\" [$__range]))",
+          "legendFormat": "{{trigger_type}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "pieType": "pie"
+      }
+    },
+    {
+      "id": 19,
+      "title": "Guidance Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 23 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_fired\" [$__interval]))",
+          "legendFormat": "Cues",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"skill_invoked\" [$__interval]))",
+          "legendFormat": "Skills",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20
+          }
+        }
+      }
+    },
+    {
+      "id": 20,
+      "title": "Recent Collaboration Events",
+      "type": "logs",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 27 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=~\"session_start|session_end|skill_invoked|domain_modeling\"",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    }
+  ]
+}
