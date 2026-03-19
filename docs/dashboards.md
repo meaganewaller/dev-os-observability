@@ -173,6 +173,85 @@ All dashboards are provisioned automatically and appear in the **DevOS** folder 
 
 ---
 
+## Collaboration Insights
+
+**Purpose:** Understand how human and AI work together.
+
+**URL:** http://localhost:3000/d/devos-collaboration
+
+### Panels
+
+| Panel | Description |
+|-------|-------------|
+| Session Archetypes | Distribution: sprint, flow, marathon |
+| Session Duration Categories | Quick, short, medium, long, marathon |
+| Task List Usage | Sessions using task lists for planning |
+| Avg Writes/Session | Throughput indicator |
+| Change Types | Architecture, bugfix, feature, test, docs |
+| Risk Profile | Low, medium, high risk changes |
+| Top Cues Fired | Most helpful guidance injections |
+| Cue Triggers by Type | Prompt, bash, tool triggers |
+
+### Key Insights
+
+- **Session archetypes** reveal work style preferences
+- **Change type distribution** shows strategic vs tactical work balance
+- **Cue effectiveness** indicates how well guidance is targeted
+
+---
+
+## Time & Effort
+
+**Purpose:** Track session duration, productivity, and work patterns.
+
+**URL:** http://localhost:3000/d/devos-time-effort
+
+### Panels
+
+| Panel | Description |
+|-------|-------------|
+| Productivity (Writes/Session) | Average file modifications per session |
+| Efficiency (Writes/Friction) | Smoother flow = higher ratio |
+| Duration Distribution | How long sessions typically last |
+| Activity Timeline | Writes, tests, friction over time |
+| Daily Writes/Sessions | Averages per day |
+| Test Coverage Rate | Tests per write (TDD indicator) |
+| Failure Rate | Tool failures as % of writes |
+
+### Use Cases
+
+- How productive are our sessions?
+- Are we spending time efficiently (low friction)?
+- What's our typical session length?
+
+---
+
+## Project Focus
+
+**Purpose:** Understand what we work on - categories, risk, and skills.
+
+**URL:** http://localhost:3000/d/devos-project-focus
+
+### Panels
+
+| Panel | Description |
+|-------|-------------|
+| Change Categories | Architecture, bugfix, feature, test distribution |
+| Risk Profile | Low/medium/high risk changes |
+| Skills Applied | Engineering skills used |
+| Architecture/Bugfix/Test Ratios | Balance of work types |
+| High Risk Ratio | Safety indicator |
+| Change Types Over Time | Trends in work categories |
+
+### Key Metrics
+
+- **Architecture Ratio**: Higher = more strategic work
+- **Bugfix Ratio**: Lower = better initial quality
+- **Test Ratio**: Higher = better coverage
+- **High Risk Ratio**: Lower = safer changes
+
+---
+
 ## Customizing Dashboards
 
 Dashboards are stored in `grafana/dashboards/` as JSON files.

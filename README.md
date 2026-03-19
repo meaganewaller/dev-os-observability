@@ -74,6 +74,9 @@ All dashboards are in the **DevOS** folder in Grafana.
 | [Hook Performance](docs/dashboards.md#hook-performance) | Tool success rates and errors |
 | [Quality Signals](docs/dashboards.md#quality-signals) | Reversals, large changes, decisions |
 | [Weekly Trends](docs/dashboards.md#weekly-trends) | Week-over-week comparisons |
+| [Collaboration Insights](docs/dashboards.md#collaboration-insights) | Human/AI collaboration patterns |
+| [Time & Effort](docs/dashboards.md#time--effort) | Session duration and productivity |
+| [Project Focus](docs/dashboards.md#project-focus) | Work categories and risk profiles |
 
 ## Alerts
 
