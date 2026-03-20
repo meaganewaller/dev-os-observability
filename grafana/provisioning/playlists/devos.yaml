@@ -1,0 +1,69 @@
+apiVersion: 1
+
+playlists:
+  # Primary situational awareness playlist - ideal for big screens
+  - name: DevOS Overview
+    interval: 30s
+    uid: devos-overview-playlist
+    items:
+      # Start with high-level mission control
+      - type: dashboard_by_uid
+        value: devos-mission-control
+      # Current session activity
+      - type: dashboard_by_uid
+        value: devos-sessions
+      # Friction and problem areas
+      - type: dashboard_by_uid
+        value: devos-friction
+      # Quality metrics (test stability)
+      - type: dashboard_by_uid
+        value: devos-quality
+      # Hook performance
+      - type: dashboard_by_uid
+        value: devos-hooks
+
+  # Deep dive playlist - longer interval for analysis
+  - name: DevOS Deep Dive
+    interval: 60s
+    uid: devos-deepdive-playlist
+    items:
+      - type: dashboard_by_uid
+        value: devos-mission-control
+      - type: dashboard_by_uid
+        value: devos-friction
+      - type: dashboard_by_uid
+        value: devos-quality
+      - type: dashboard_by_uid
+        value: devos-cues
+      - type: dashboard_by_uid
+        value: devos-project-focus
+      - type: dashboard_by_uid
+        value: devos-time-effort
+      - type: dashboard_by_uid
+        value: devos-weekly
+
+  # Weekly review playlist - all dashboards
+  - name: DevOS Weekly Review
+    interval: 45s
+    uid: devos-weekly-playlist
+    items:
+      - type: dashboard_by_uid
+        value: devos-mission-control
+      - type: dashboard_by_uid
+        value: devos-sessions
+      - type: dashboard_by_uid
+        value: devos-friction
+      - type: dashboard_by_uid
+        value: devos-quality
+      - type: dashboard_by_uid
+        value: devos-hooks
+      - type: dashboard_by_uid
+        value: devos-cues
+      - type: dashboard_by_uid
+        value: devos-project-focus
+      - type: dashboard_by_uid
+        value: devos-collaboration
+      - type: dashboard_by_uid
+        value: devos-time-effort
+      - type: dashboard_by_uid
+        value: devos-weekly
