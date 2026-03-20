@@ -48,51 +48,28 @@
     },
     {
       "id": 22,
-      "title": "Read Failures",
-      "type": "stat",
-      "gridPos": { "h": 3, "w": 2, "x": 4, "y": 1 },
+      "title": "Read Success Rate",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 4, "x": 4, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Read operations that failed (usually resource-limit)",
+      "description": "Successful reads / (reads + read failures). Requires tool_read events (new).",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" | payload_tool=\"Read\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_read\" [$__range])) / (sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_read\" [$__range])) + sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" | payload_tool=\"Read\" [$__range])) + 0.001) * 100",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
           "thresholds": {
+            "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 50 },
-              { "color": "red", "value": 100 }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 23,
-      "title": "Bash Failures",
-      "type": "stat",
-      "gridPos": { "h": 3, "w": 2, "x": 4, "y": 4 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Bash commands that returned non-zero exit code",
-      "targets": [
-        {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" | payload_tool=\"Bash\" [$__range]))",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 20 },
-              { "color": "red", "value": 50 }
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "green", "value": 85 }
             ]
           }
         }
@@ -214,7 +191,7 @@
       "id": 8,
       "title": "Writes",
       "type": "stat",
-      "gridPos": { "h": 3, "w": 4, "x": 4, "y": 8 },
+      "gridPos": { "h": 3, "w": 3, "x": 4, "y": 8 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
@@ -229,10 +206,29 @@
       }
     },
     {
+      "id": 25,
+      "title": "Reads",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 3, "x": 7, "y": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Successful file reads (requires tool_read events)",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_read\" [$__range]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "blue", "mode": "fixed" }
+        }
+      }
+    },
+    {
       "id": 9,
       "title": "Total Failures",
       "type": "stat",
-      "gridPos": { "h": 3, "w": 4, "x": 8, "y": 8 },
+      "gridPos": { "h": 3, "w": 3, "x": 10, "y": 8 },
       "datasource": { "type": "loki", "uid": "loki" },
       "description": "All tool failures (Read + Bash + Write/Edit)",
       "targets": [
@@ -251,7 +247,7 @@
       "id": 10,
       "title": "Tests",
       "type": "stat",
-      "gridPos": { "h": 3, "w": 4, "x": 12, "y": 8 },
+      "gridPos": { "h": 3, "w": 3, "x": 13, "y": 8 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
