@@ -12,12 +12,15 @@ All dashboards are provisioned automatically and appear in the **DevOS** folder 
 
 | Panel | Description | Thresholds |
 |-------|-------------|------------|
-| Success Rate | tool_write / (tool_write + tool_failure) | <80% red, 80-90% yellow, >90% green |
+| Write Success Rate | writes / (writes + Write/Edit failures) | <80% red, 80-90% yellow, >90% green |
+| Read Failures | Read tool failures (usually resource-limit) | >100 red, 50-100 yellow, <50 green |
+| Bash Failures | Bash commands with non-zero exit | >50 red, 20-50 yellow, <20 green |
 | Friction Rate | friction per 100 writes | >30% red, 15-30% yellow, <15% green |
 | Reversal Rate | reversals per 100 writes | >7% red, 3-7% yellow, <3% green |
 | ADR-0008 Tracker | resource-limit errors (7d) | >50 red, 25-50 yellow, <25 green |
-| Activity Stats | Sessions, Writes, Failures, Tests, Cues, Tradeoffs | - |
-| Activity Timeline | Writes, failures, friction over time | - |
+| Activity Stats | Sessions, Writes, Total Failures, Tests, Cues, Tradeoffs | - |
+| Activity Timeline | Writes, Read failures, Bash failures, friction over time | - |
+| Failure Breakdown by Tool | Pie chart: Read vs Bash vs Write/Edit | - |
 | Friction Breakdown | Pie chart by subdomain | - |
 | Quality Signals | Reversals, large changes, compactions | Threshold-based |
 

@@ -19,14 +19,14 @@
     },
     {
       "id": 2,
-      "title": "Success Rate",
+      "title": "Write Success Rate",
       "type": "gauge",
-      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
+      "gridPos": { "h": 6, "w": 4, "x": 0, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Tool writes / (writes + failures)",
+      "description": "Successful writes / (writes + write failures). Currently no Write/Edit failures are tracked, so this shows write volume health.",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_write\" [$__range])) / (sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_write\" [$__range])) + sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_failure\" [$__range]))) * 100",
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_write\" [$__range])) / (sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_write\" [$__range])) + sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" | payload_tool=~\"Write|Edit\" [$__range])) + 0.001) * 100",
           "refId": "A"
         }
       ],
@@ -41,6 +41,58 @@
               { "color": "red", "value": null },
               { "color": "yellow", "value": 80 },
               { "color": "green", "value": 90 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 22,
+      "title": "Read Failures",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 2, "x": 4, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Read operations that failed (usually resource-limit)",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" | payload_tool=\"Read\" [$__range]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 100 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 23,
+      "title": "Bash Failures",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 2, "x": 4, "y": 4 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Bash commands that returned non-zero exit code",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" | payload_tool=\"Bash\" [$__range]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 20 },
+              { "color": "red", "value": 50 }
             ]
           }
         }
@@ -178,10 +230,11 @@
     },
     {
       "id": 9,
-      "title": "Failures",
+      "title": "Total Failures",
       "type": "stat",
       "gridPos": { "h": 3, "w": 4, "x": 8, "y": 8 },
       "datasource": { "type": "loki", "uid": "loki" },
+      "description": "All tool failures (Read + Bash + Write/Edit)",
       "targets": [
         {
           "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_failure\" [$__range]))",
@@ -261,14 +314,19 @@
           "refId": "A"
         },
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_failure\" [$__interval]))",
-          "legendFormat": "Failures",
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" | payload_tool=\"Read\" [$__interval]))",
+          "legendFormat": "Read Failures",
           "refId": "B"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" | payload_tool=\"Bash\" [$__interval]))",
+          "legendFormat": "Bash Failures",
+          "refId": "C"
         },
         {
           "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"friction\" [$__interval]))",
           "legendFormat": "Friction",
-          "refId": "C"
+          "refId": "D"
         }
       ],
       "fieldConfig": {
@@ -286,8 +344,12 @@
             "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
           },
           {
-            "matcher": { "id": "byName", "options": "Failures" },
+            "matcher": { "id": "byName", "options": "Read Failures" },
             "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Bash Failures" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }]
           },
           {
             "matcher": { "id": "byName", "options": "Friction" },
@@ -298,9 +360,50 @@
     },
     {
       "id": 14,
+      "title": "Failure Breakdown by Tool",
+      "type": "piechart",
+      "gridPos": { "h": 7, "w": 4, "x": 16, "y": 11 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Distribution of tool failures by tool type",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" | payload_tool=\"Read\" [$__range]))",
+          "legendFormat": "Read",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" | payload_tool=\"Bash\" [$__range]))",
+          "legendFormat": "Bash",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" | payload_tool=~\"Write|Edit\" [$__range]))",
+          "legendFormat": "Write/Edit",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Read" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Bash" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Write/Edit" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }]
+          }
+        ]
+      }
+    },
+    {
+      "id": 24,
       "title": "Friction Breakdown",
       "type": "piechart",
-      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 11 },
+      "gridPos": { "h": 7, "w": 4, "x": 20, "y": 11 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {

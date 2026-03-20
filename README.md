@@ -67,7 +67,7 @@ All dashboards are in the **DevOS** folder in Grafana.
 
 | Dashboard | Purpose |
 |-----------|---------|
-| [Mission Control](docs/dashboards.md#mission-control) | High-level system health overview |
+| [Mission Control](docs/dashboards.md#mission-control) | High-level system health with tool failure breakdown |
 | [Friction Overview](docs/dashboards.md#friction-overview) | Friction events and ADR-0008 tracking |
 | [Session Activity](docs/dashboards.md#session-activity) | Session and tool usage patterns |
 | [Cue Effectiveness](docs/dashboards.md#cue-effectiveness) | Cue system performance |
