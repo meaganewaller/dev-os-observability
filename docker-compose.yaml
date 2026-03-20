@@ -16,7 +16,6 @@ services:
       - ./grafana/dashboards:/devos-dashboards
       - ./grafana/provisioning/dashboards/devos.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/devos.yaml
       - ./grafana/provisioning/alerting:/otel-lgtm/grafana/conf/provisioning/alerting
-      - ./grafana/provisioning/playlists:/otel-lgtm/grafana/conf/provisioning/playlists
 
   devos-collector:
     image: otel/opentelemetry-collector-contrib:latest
