@@ -1,140 +1,105 @@
 {
   "uid": "devos-hooks",
   "title": "DevOS: Hook Performance",
+  "description": "Monitor hook execution health, duration, and failure patterns",
   "tags": ["devos", "hooks"],
   "timezone": "browser",
   "schemaVersion": 39,
   "refresh": "30s",
   "time": {
-    "from": "now-24h",
+    "from": "now-7d",
     "to": "now"
   },
   "panels": [
     {
       "id": 1,
-      "title": "Friction by Tool Over Time",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "title": "Overview",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "title": "Total Executions",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (tool_name) (count_over_time({service_name=\"devos\"} | log_source=\"friction\" [$__interval]))",
-          "legendFormat": "{{tool_name}}",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"hook-health\"} [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 20
-          }
+          "color": { "fixedColor": "blue", "mode": "fixed" },
+          "noValue": "0"
         }
       }
     },
     {
-      "id": 2,
-      "title": "Tool Write Success Rate",
-      "type": "gauge",
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "id": 3,
+      "title": "Successes",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Writes vs write-related friction",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_write\" [$__range])) / (sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_write\" [$__range])) + sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_failure\" [$__range]))) * 100",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | status=\"success\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "green", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Failures",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | status=\"failure\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "red", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Success Rate",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | status=\"success\" [$__range])) / sum(count_over_time({service_name=\"devos\", log_source=\"hook-health\"} [$__range])) * 100",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
+          "decimals": 1,
           "min": 0,
           "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "red", "value": null },
-              { "color": "yellow", "value": 80 },
-              { "color": "green", "value": 95 }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 3,
-      "title": "Large Changes",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 8 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Changes flagged as large",
-      "targets": [
-        {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"large_change\" [$__range]))",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 10 },
-              { "color": "red", "value": 25 }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 4,
-      "title": "Reversals",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 8 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Work that had to be undone",
-      "targets": [
-        {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"reversal\" [$__range]))",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 5 },
-              { "color": "red", "value": 15 }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 5,
-      "title": "Context Compactions",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 12 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Sessions hitting context limits",
-      "targets": [
-        {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"context_compact\" [$__range]))",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 3 },
-              { "color": "red", "value": 10 }
+              { "color": "orange", "value": 90 },
+              { "color": "yellow", "value": 95 },
+              { "color": "green", "value": 99 }
             ]
           }
         }
@@ -142,34 +107,223 @@
     },
     {
       "id": 6,
-      "title": "Error Patterns by Domain",
-      "type": "barchart",
-      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 16 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "targets": [
-        {
-          "expr": "sum by (domain, subdomain) (count_over_time({service_name=\"devos\"} | log_source=\"friction\" [$__range]))",
-          "legendFormat": "{{domain}}/{{subdomain}}",
-          "refId": "A"
-        }
-      ]
+      "title": "Execution Trends",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "collapsed": false
     },
     {
       "id": 7,
-      "title": "Recent Failures",
-      "type": "logs",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "title": "Hook Executions Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 6 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{service_name=\"devos\"} | log_source=\"friction\"",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | status=\"success\" [$__interval]))",
+          "legendFormat": "Success",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | status=\"failure\" [$__interval]))",
+          "legendFormat": "Failure",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 30,
+            "pointSize": 5,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Success" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Failure" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "title": "Executions by Hook",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 6 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (hook) (count_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | hook!=\"\" [$__range])))",
+          "legendFormat": "{{hook}}",
           "refId": "A"
         }
       ],
       "options": {
-        "showLabels": true,
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "donut"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Performance",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "collapsed": false
+    },
+    {
+      "id": 10,
+      "title": "Slowest Hooks (Avg Duration)",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Hooks with highest average execution time",
+      "targets": [
+        {
+          "expr": "topk(10, avg by (hook) (avg_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | unwrap duration_ms [$__range])))",
+          "legendFormat": "{{hook}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": { "mode": "continuous-YlRd" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1000 },
+              { "color": "orange", "value": 2000 },
+              { "color": "red", "value": 3000 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Hooks with Failures",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Hooks that have failed",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (hook) (count_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | status=\"failure\" | hook!=\"\" [$__range])))",
+          "legendFormat": "{{hook}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "continuous-RdYlGr" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "orange", "value": 10 },
+              { "color": "red", "value": 20 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Duration Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 23 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Average hook duration over time (all hooks)",
+      "targets": [
+        {
+          "expr": "avg(avg_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | unwrap duration_ms [$__interval]))",
+          "legendFormat": "Avg Duration",
+          "refId": "A"
+        },
+        {
+          "expr": "max(max_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | unwrap duration_ms [$__interval]))",
+          "legendFormat": "Max Duration",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "pointSize": 5,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Avg Duration" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Max Duration" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          }
+        ]
+      }
+    },
+    {
+      "id": 13,
+      "title": "Recent Events",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+      "collapsed": false
+    },
+    {
+      "id": 14,
+      "title": "Recent Hook Failures",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 30 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{service_name=\"devos\", log_source=\"hook-health\"} | json | status=\"failure\"",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showLabels": false,
         "showTime": true,
-        "wrapLogMessage": true
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
       }
     }
   ]
