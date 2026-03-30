@@ -27,8 +27,8 @@
       "description": "Distribution of session types: sprint (focused burst), flow (steady work), marathon (long session)",
       "targets": [
         {
-          "expr": "sum by (archetype) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_duration\" | archetype!=\"\" [$__range]))",
-          "legendFormat": "{{archetype}}",
+          "expr": "sum by (payload_archetype) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_duration\" | payload_archetype!=\"\" [$__range]))",
+          "legendFormat": "{{payload_archetype}}",
           "refId": "A"
         }
       ],
@@ -51,8 +51,8 @@
       "description": "How long sessions last: quick (<5m), short (5-15m), medium (15-60m), long (1-4h), marathon (4h+)",
       "targets": [
         {
-          "expr": "sum by (duration_category) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_end\" | duration_category!=\"\" [$__range]))",
-          "legendFormat": "{{duration_category}}",
+          "expr": "sum by (payload_duration_category) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_end\" | payload_duration_category!=\"\" [$__range]))",
+          "legendFormat": "{{payload_duration_category}}",
           "refId": "A"
         }
       ],
@@ -72,17 +72,18 @@
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Sessions that used task lists for planning",
+      "description": "Task completion events",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_duration\" | has_task_list=\"true\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"task_completed\" [$__range]))",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "fixedColor": "blue", "mode": "fixed" },
-          "displayName": "With Task List"
+          "displayName": "Tasks Completed",
+          "noValue": "0"
         }
       }
     },
@@ -94,14 +95,15 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_start\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_start\" [$__range]))",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "fixedColor": "green", "mode": "fixed" },
-          "displayName": "Sessions"
+          "displayName": "Sessions",
+          "noValue": "0"
         }
       }
     },
@@ -114,7 +116,7 @@
       "description": "Average file writes per session (throughput indicator)",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_start\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) / sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_start\" [$__range]))",
           "refId": "A"
         }
       ],
@@ -135,7 +137,7 @@
       "description": "Average test runs per session",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"test_run\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_start\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" [$__range])) / sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_start\" [$__range]))",
           "refId": "A"
         }
       ],
@@ -163,8 +165,8 @@
       "description": "Categories of work: architecture, bugfix, feature, refactor, test, docs",
       "targets": [
         {
-          "expr": "sum by (change_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type!=\"\" [$__range]))",
-          "legendFormat": "{{change_type}}",
+          "expr": "sum by (payload_change_type) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_change_type!=\"\" [$__range]))",
+          "legendFormat": "{{payload_change_type}}",
           "refId": "A"
         }
       ],
@@ -187,8 +189,8 @@
       "description": "Risk levels of changes made",
       "targets": [
         {
-          "expr": "sum by (risk) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | risk!=\"\" [$__range]))",
-          "legendFormat": "{{risk}}",
+          "expr": "sum by (payload_risk) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_risk!=\"\" [$__range]))",
+          "legendFormat": "{{payload_risk}}",
           "refId": "A"
         }
       ],
@@ -211,8 +213,8 @@
       "description": "How work categories change over time",
       "targets": [
         {
-          "expr": "sum by (change_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type!=\"\" [$__interval]))",
-          "legendFormat": "{{change_type}}",
+          "expr": "sum by (payload_change_type) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_change_type!=\"\" [$__interval]))",
+          "legendFormat": "{{payload_change_type}}",
           "refId": "A"
         }
       ],
@@ -243,79 +245,74 @@
       "description": "Contextual guidance injections",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_fired\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"cue_fired\" [$__range]))",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "orange", "mode": "fixed" }
+          "color": { "fixedColor": "orange", "mode": "fixed" },
+          "noValue": "0"
         }
       }
     },
     {
       "id": 14,
-      "title": "Skills Invoked",
+      "title": "Tool Failures",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 4, "y": 19 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Explicit skill invocations",
+      "description": "Tool execution failures",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"skill_invoked\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_failure\" [$__range]))",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "blue", "mode": "fixed" }
+          "color": { "fixedColor": "red", "mode": "fixed" },
+          "noValue": "0"
         }
       }
     },
     {
       "id": 15,
-      "title": "Domain Modeling",
+      "title": "Test Runs",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 8, "y": 19 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Domain modeling sessions",
+      "description": "Test execution events",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"domain_modeling\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" [$__range]))",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "purple", "mode": "fixed" }
+          "color": { "fixedColor": "green", "mode": "fixed" },
+          "noValue": "0"
         }
       }
     },
     {
       "id": 16,
-      "title": "Cue Efficiency",
-      "type": "gauge",
+      "title": "Decisions Captured",
+      "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 12, "y": 19 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Cues fired per match (lower = better targeting)",
+      "description": "Decision tradeoffs recorded",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_fired\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_matched\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"decision_tradeoff\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "min": 0,
-          "max": 5,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 2 },
-              { "color": "red", "value": 3 }
-            ]
-          }
+          "color": { "fixedColor": "purple", "mode": "fixed" },
+          "noValue": "0"
         }
       }
     },
@@ -328,8 +325,8 @@
       "description": "Which cues provide the most guidance",
       "targets": [
         {
-          "expr": "topk(10, sum by (cue_id) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_fired\" [$__range])))",
-          "legendFormat": "{{cue_id}}",
+          "expr": "topk(10, sum by (payload_cue_id) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"cue_fired\" | payload_cue_id!=\"\" [$__range])))",
+          "legendFormat": "{{payload_cue_id}}",
           "refId": "A"
         }
       ],
@@ -352,8 +349,8 @@
       "description": "What triggers cue activation: prompt, bash, tool, etc.",
       "targets": [
         {
-          "expr": "sum by (trigger_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_fired\" | trigger_type!=\"\" [$__range]))",
-          "legendFormat": "{{trigger_type}}",
+          "expr": "sum by (payload_trigger_type) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"cue_fired\" | payload_trigger_type!=\"\" [$__range]))",
+          "legendFormat": "{{payload_trigger_type}}",
           "refId": "A"
         }
       ],
@@ -368,20 +365,25 @@
     },
     {
       "id": 19,
-      "title": "Guidance Over Time",
+      "title": "Activity Over Time",
       "type": "timeseries",
       "gridPos": { "h": 4, "w": 8, "x": 8, "y": 23 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"cue_fired\" [$__interval]))",
-          "legendFormat": "Cues",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__interval]))",
+          "legendFormat": "Writes",
           "refId": "A"
         },
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"skill_invoked\" [$__interval]))",
-          "legendFormat": "Skills",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" [$__interval]))",
+          "legendFormat": "Tests",
           "refId": "B"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_failure\" [$__interval]))",
+          "legendFormat": "Failures",
+          "refId": "C"
         }
       ],
       "fieldConfig": {
@@ -401,7 +403,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=~\"session_start|session_end|skill_invoked|domain_modeling\"",
+          "expr": "{service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=~\"session_start|session_end|decision_tradeoff|large_change\"",
           "refId": "A"
         }
       ],
