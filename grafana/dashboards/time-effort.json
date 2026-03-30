@@ -26,14 +26,15 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_start\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_start\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "fixedColor": "blue", "mode": "fixed" },
-          "displayName": "Sessions"
+          "displayName": "Sessions",
+          "noValue": "0"
         }
       }
     },
@@ -45,14 +46,15 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "fixedColor": "green", "mode": "fixed" },
-          "displayName": "Writes"
+          "displayName": "Writes",
+          "noValue": "0"
         }
       }
     },
@@ -64,14 +66,15 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"test_run\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "fixedColor": "purple", "mode": "fixed" },
-          "displayName": "Tests"
+          "displayName": "Tests",
+          "noValue": "0"
         }
       }
     },
@@ -83,14 +86,15 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"friction\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "fixedColor": "orange", "mode": "fixed" },
-          "displayName": "Friction"
+          "displayName": "Friction",
+          "noValue": "0"
         }
       }
     },
@@ -103,7 +107,7 @@
       "description": "Average file modifications per session",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_start\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_start\" [$__range])) > 0 or vector(1))",
           "refId": "A"
         }
       ],
@@ -132,7 +136,7 @@
       "description": "Writes per friction event (higher = smoother flow)",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"friction\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} [$__range])) > 0 or vector(1))",
           "refId": "A"
         }
       ],
@@ -168,8 +172,8 @@
       "description": "Quick (<5m), short (5-15m), medium (15-60m), long (1-4h), marathon (4h+)",
       "targets": [
         {
-          "expr": "sum by (duration_category) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_end\" | duration_category!=\"\" [$__range]))",
-          "legendFormat": "{{duration_category}}",
+          "expr": "sum by (payload_duration_category) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_end\" | payload_duration_category!=\"\" [$__range]))",
+          "legendFormat": "{{payload_duration_category}}",
           "refId": "A"
         }
       ],
@@ -181,6 +185,11 @@
           "values": ["value", "percent"]
         },
         "pieType": "donut"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
       }
     },
     {
@@ -192,8 +201,8 @@
       "description": "Work style: sprint (intense burst), flow (steady), marathon (extended)",
       "targets": [
         {
-          "expr": "sum by (archetype) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_duration\" | archetype!=\"\" [$__range]))",
-          "legendFormat": "{{archetype}}",
+          "expr": "sum by (payload_archetype) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_duration\" | payload_archetype!=\"\" [$__range]))",
+          "legendFormat": "{{payload_archetype}}",
           "refId": "A"
         }
       ],
@@ -205,6 +214,11 @@
           "values": ["value", "percent"]
         },
         "pieType": "donut"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
       }
     },
     {
@@ -216,8 +230,8 @@
       "description": "Session duration categories over time",
       "targets": [
         {
-          "expr": "sum by (duration_category) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_end\" | duration_category!=\"\" [$__interval]))",
-          "legendFormat": "{{duration_category}}",
+          "expr": "sum by (payload_duration_category) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_end\" | payload_duration_category!=\"\" [$__interval]))",
+          "legendFormat": "{{payload_duration_category}}",
           "refId": "A"
         }
       ],
@@ -227,7 +241,8 @@
             "drawStyle": "bars",
             "stacking": { "mode": "normal" },
             "fillOpacity": 80
-          }
+          },
+          "color": { "mode": "palette-classic" }
         }
       }
     },
@@ -247,17 +262,17 @@
       "description": "Writes, tests, and friction over time",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__interval]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__interval]))",
           "legendFormat": "Writes",
           "refId": "A"
         },
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"test_run\" [$__interval]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" [$__interval]))",
           "legendFormat": "Tests",
           "refId": "B"
         },
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"friction\" [$__interval]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} [$__interval]))",
           "legendFormat": "Friction",
           "refId": "C"
         }
@@ -266,8 +281,10 @@
         "defaults": {
           "custom": {
             "drawStyle": "line",
+            "lineWidth": 2,
             "fillOpacity": 20,
-            "pointSize": 5
+            "pointSize": 5,
+            "showPoints": "auto"
           }
         },
         "overrides": [
@@ -294,7 +311,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_start\" [$__interval]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_start\" [$__interval]))",
           "legendFormat": "Sessions Started",
           "refId": "A"
         }
@@ -325,7 +342,7 @@
       "description": "Average writes per day",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range])) / 7",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) / 7",
           "refId": "A"
         }
       ],
@@ -333,7 +350,8 @@
         "defaults": {
           "decimals": 0,
           "color": { "fixedColor": "green", "mode": "fixed" },
-          "displayName": "Avg Writes/Day"
+          "displayName": "Avg Writes/Day",
+          "noValue": "0"
         }
       }
     },
@@ -346,7 +364,7 @@
       "description": "Average sessions per day",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"session_start\" [$__range])) / 7",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_start\" [$__range])) / 7",
           "refId": "A"
         }
       ],
@@ -354,7 +372,8 @@
         "defaults": {
           "decimals": 1,
           "color": { "fixedColor": "blue", "mode": "fixed" },
-          "displayName": "Avg Sessions/Day"
+          "displayName": "Avg Sessions/Day",
+          "noValue": "0"
         }
       }
     },
@@ -367,7 +386,7 @@
       "description": "Test runs per write (indicator of test-driven development)",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"test_run\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range])) * 100",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) > 0 or vector(1)) * 100",
           "refId": "A"
         }
       ],
@@ -396,7 +415,7 @@
       "description": "Tool failures as percentage of writes (lower is better)",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_failure\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range])) * 100",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_failure\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) > 0 or vector(1)) * 100",
           "refId": "A"
         }
       ],
@@ -404,13 +423,13 @@
         "defaults": {
           "unit": "percent",
           "min": 0,
-          "max": 50,
+          "max": 200,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "yellow", "value": 10 },
-              { "color": "red", "value": 25 }
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 100 }
             ]
           }
         }
@@ -424,7 +443,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=~\"session_start|session_end|session_duration\"",
+          "expr": "{service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=~\"session_start|session_end|session_duration\"",
           "refId": "A"
         }
       ],
