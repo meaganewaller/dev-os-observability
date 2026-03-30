@@ -1,6 +1,7 @@
 {
   "uid": "devos-quality",
   "title": "DevOS: Quality Signals",
+  "description": "Track code quality indicators - test results, reversals, large changes, and decision documentation",
   "tags": ["devos", "quality"],
   "timezone": "browser",
   "schemaVersion": 39,
@@ -19,14 +20,14 @@
     },
     {
       "id": 2,
-      "title": "Reversal Rate",
+      "title": "Test Pass Rate",
       "type": "gauge",
       "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Work that had to be undone (lower is better)",
+      "description": "Percentage of tests that pass",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"reversal\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_write\" [$__range])) * 100",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" | payload_result=\"passed\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" [$__range])) > 0 or vector(1)) * 100",
           "refId": "A"
         }
       ],
@@ -34,13 +35,13 @@
         "defaults": {
           "unit": "percent",
           "min": 0,
-          "max": 20,
+          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 5 },
-              { "color": "red", "value": 10 }
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "green", "value": 90 }
             ]
           }
         }
@@ -48,14 +49,43 @@
     },
     {
       "id": 3,
-      "title": "Large Change Rate",
+      "title": "Reversal Rate",
       "type": "gauge",
       "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Work that had to be undone (lower is better)",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"reversal\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) > 0 or vector(1)) * 100",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 20,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Large Change Rate",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
       "description": "Changes flagged as large (consider breaking down)",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"large_change\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_write\" [$__range])) * 100",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"large_change\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) > 0 or vector(1)) * 100",
           "refId": "A"
         }
       ],
@@ -76,50 +106,29 @@
       }
     },
     {
-      "id": 4,
-      "title": "Decision Tradeoffs Documented",
-      "type": "stat",
-      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Explicit tradeoff discussions (higher is better)",
-      "targets": [
-        {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tradeoff_auto_capture\" [$__range]))",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "yellow", "value": null },
-              { "color": "green", "value": 5 }
-            ]
-          }
-        }
-      }
-    },
-    {
       "id": 5,
-      "title": "Principles Activated",
-      "type": "stat",
+      "title": "Tool Success Rate",
+      "type": "gauge",
       "gridPos": { "h": 6, "w": 6, "x": 18, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Principle-guided decisions",
+      "description": "Tool executions without failures",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=~\"principle_.*\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) + sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_failure\" [$__range])) > 0 or vector(1)) * 100",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
           "thresholds": {
+            "mode": "absolute",
             "steps": [
-              { "color": "yellow", "value": null },
-              { "color": "green", "value": 3 }
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 30 },
+              { "color": "green", "value": 50 }
             ]
           }
         }
@@ -127,191 +136,284 @@
     },
     {
       "id": 6,
-      "title": "Quality Events Over Time",
+      "title": "Test Activity",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
+      "collapsed": false
+    },
+    {
+      "id": 7,
+      "title": "Test Results Over Time",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 7 },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 8 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (event_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=~\"reversal|large_change|tradeoff_auto_capture|decision|prompt_opinion\" [$__interval]))",
-          "legendFormat": "{{event_type}}",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" | payload_result=\"passed\" [$__interval]))",
+          "legendFormat": "Passed",
           "refId": "A"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" | payload_result=\"failed\" [$__interval]))",
+          "legendFormat": "Failed",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 80,
             "stacking": { "mode": "normal" }
           }
-        }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Passed" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Failed" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
       }
     },
     {
-      "id": 7,
-      "title": "Decisions & Reversals",
-      "type": "row",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 },
-      "collapsed": false
-    },
-    {
       "id": 8,
-      "title": "Reversals",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 16 },
+      "title": "Test Results",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"reversal\" [$__range]))",
+          "expr": "sum by (payload_result) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" | payload_result!=\"\" [$__range]))",
+          "legendFormat": "{{payload_result}}",
           "refId": "A"
         }
       ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "donut"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 5 },
-              { "color": "red", "value": 15 }
-            ]
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "passed" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "failed" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
           }
-        }
+        ]
       }
     },
     {
       "id": 9,
-      "title": "Large Changes",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 16 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "targets": [
-        {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"large_change\" [$__range]))",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 10 },
-              { "color": "red", "value": 25 }
-            ]
-          }
-        }
-      }
+      "title": "Counts",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
+      "collapsed": false
     },
     {
       "id": 10,
-      "title": "Tradeoffs",
+      "title": "Test Runs",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 16 },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 17 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tradeoff_auto_capture\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [{ "color": "blue", "value": null }]
-          }
+          "color": { "fixedColor": "green", "mode": "fixed" },
+          "noValue": "0"
         }
       }
     },
     {
       "id": 11,
-      "title": "Opinions Sought",
+      "title": "Tool Failures",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 16 },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 17 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"prompt_opinion\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_failure\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [{ "color": "purple", "value": null }]
-          }
+          "color": { "fixedColor": "red", "mode": "fixed" },
+          "noValue": "0"
         }
       }
     },
     {
       "id": 12,
-      "title": "Context Compactions",
+      "title": "Reversals",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 16 },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 17 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Sessions hitting context limits",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"context_compact\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"reversal\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 3 },
-              { "color": "red", "value": 10 }
-            ]
-          }
+          "color": { "fixedColor": "orange", "mode": "fixed" },
+          "noValue": "0"
         }
       }
     },
     {
       "id": 13,
-      "title": "Domain Modeling",
+      "title": "Large Changes",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 16 },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 17 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Model-first thinking events",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"domain_modeling\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"large_change\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [{ "color": "orange", "value": null }]
-          }
+          "color": { "fixedColor": "yellow", "mode": "fixed" },
+          "noValue": "0"
         }
       }
     },
     {
       "id": 14,
-      "title": "Recent Quality Events",
-      "type": "logs",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 20 },
+      "title": "Decisions",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 17 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Tradeoffs documented",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=~\"decision_tradeoff|tradeoff_auto_capture\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "purple", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "title": "Context Compacts",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 17 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Sessions hitting context limits",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"context_compact\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "blue", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "title": "Trends",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 },
+      "collapsed": false
+    },
+    {
+      "id": 17,
+      "title": "Quality Events Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=~\"reversal|large_change|tradeoff_auto_capture|decision|prompt_opinion|principle_.*|domain_modeling\"",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"reversal\" [$__interval]))",
+          "legendFormat": "Reversals",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"large_change\" [$__interval]))",
+          "legendFormat": "Large Changes",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_failure\" [$__interval]))",
+          "legendFormat": "Tool Failures",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=~\"decision_tradeoff|tradeoff_auto_capture\" [$__interval]))",
+          "legendFormat": "Decisions",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "pointSize": 5,
+            "showPoints": "auto"
+          },
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 18,
+      "title": "Recent Events",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 },
+      "collapsed": false
+    },
+    {
+      "id": 19,
+      "title": "Recent Quality Events",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 31 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=~\"reversal|large_change|decision_tradeoff|tradeoff_auto_capture|context_compact\"",
           "refId": "A"
         }
       ],
       "options": {
-        "showLabels": true,
+        "showLabels": false,
         "showTime": true,
-        "wrapLogMessage": true
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
       }
     }
   ]
