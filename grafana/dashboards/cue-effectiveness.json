@@ -1,6 +1,7 @@
 {
   "uid": "devos-cues",
   "title": "DevOS: Cue Effectiveness",
+  "description": "Track contextual guidance effectiveness - cue firing patterns, trigger sources, and decision quality",
   "tags": ["devos", "cues"],
   "timezone": "browser",
   "schemaVersion": 39,
@@ -12,14 +13,160 @@
   "panels": [
     {
       "id": 1,
-      "title": "Cue Activity Over Time",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "title": "Overview",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "title": "Total Cues Fired",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (event_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=~\"cue_.*\" [$__interval]))",
-          "legendFormat": "{{event_type}}",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"cue_fired\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "blue", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Cues Matched",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"cue_matched\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "green", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Decisions Captured",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"decision_tradeoff\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "purple", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Reversals",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Changes that were later undone - indicator of exploration or mistakes",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"reversal\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "orange", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Cue Triggers",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "collapsed": false
+    },
+    {
+      "id": 7,
+      "title": "Cues by Trigger Type",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 6 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "What triggers cue activation: bash commands, prompts, file operations, or subagents",
+      "targets": [
+        {
+          "expr": "sum by (payload_trigger_type) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"cue_fired\" | payload_trigger_type!=\"\" [$__range]))",
+          "legendFormat": "{{payload_trigger_type}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "donut"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Top Cues by ID",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 6 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Most frequently fired cues - which guidance is used most",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (payload_cue_id) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"cue_fired\" | payload_cue_id!=\"\" [$__range])))",
+          "legendFormat": "{{payload_cue_id}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Trigger Types Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 6 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "How cue triggers vary over time",
+      "targets": [
+        {
+          "expr": "sum by (payload_trigger_type) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"cue_fired\" | payload_trigger_type!=\"\" [$__interval]))",
+          "legendFormat": "{{payload_trigger_type}}",
           "refId": "A"
         }
       ],
@@ -27,137 +174,178 @@
         "defaults": {
           "color": { "mode": "palette-classic" },
           "custom": {
-            "drawStyle": "bars",
-            "fillOpacity": 80,
-            "stacking": { "mode": "normal" }
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 30,
+            "pointSize": 5,
+            "showPoints": "auto"
           }
         }
       }
     },
     {
-      "id": 2,
-      "title": "Total Cues Fired",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 8 },
+      "id": 10,
+      "title": "Decision Quality",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "title": "Decisions vs Reversals Over Time",
+      "type": "timeseries",
+      "description": "Track decision quality - reversals may indicate exploration or course correction",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"cue_fired\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"decision_tradeoff\" [$__interval]))",
+          "legendFormat": "Decisions",
           "refId": "A"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"reversal\" [$__interval]))",
+          "legendFormat": "Reversals",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [{ "color": "blue", "value": null }]
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "pointSize": 5,
+            "showPoints": "auto"
           }
-        }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Decisions" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Reversals" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          }
+        ]
       }
     },
     {
-      "id": 3,
-      "title": "Total Cues Matched",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 8 },
+      "id": 12,
+      "title": "Reversal Causes",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 15 },
       "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Why changes were reversed",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"cue_matched\" [$__range]))",
+          "expr": "sum by (payload_likely_cause) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"reversal\" | payload_likely_cause!=\"\" [$__range]))",
+          "legendFormat": "{{payload_likely_cause}}",
           "refId": "A"
         }
       ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "values": ["value"]
+        },
+        "pieType": "pie"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [{ "color": "green", "value": null }]
-          }
+          "color": { "mode": "palette-classic" }
         }
       }
     },
     {
-      "id": 4,
-      "title": "Cue Efficiency Ratio",
-      "type": "stat",
-      "description": "Cues fired per match (lower = more targeted matching)",
-      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 8 },
+      "id": 13,
+      "title": "Cue Efficiency",
+      "type": "gauge",
+      "description": "Ratio of cues fired to cues matched (lower is more targeted)",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 15 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"cue_fired\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"cue_matched\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"cue_fired\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"cue_matched\" [$__range])) > 0 or vector(1))",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "decimals": 1,
-          "unit": "short",
-          "color": { "mode": "thresholds" },
+          "min": 0,
+          "max": 20,
           "thresholds": {
+            "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
               { "color": "yellow", "value": 5 },
-              { "color": "red", "value": 10 }
+              { "color": "orange", "value": 10 },
+              { "color": "red", "value": 15 }
             ]
           }
         }
+      },
+      "options": {
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       }
     },
     {
-      "id": 5,
-      "title": "Cues by Trigger Type",
-      "type": "piechart",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "targets": [
-        {
-          "expr": "sum by (payload_trigger_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"cue_fired\" [$__range]))",
-          "legendFormat": "{{payload_trigger_type}}",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 6,
-      "title": "Decisions & Reversals",
+      "id": 14,
+      "title": "Cue Activity Heatmap",
       "type": "timeseries",
-      "description": "Track decision quality via reversal rate",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 23 },
       "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Cue firing patterns - see when guidance is most active",
       "targets": [
         {
-          "expr": "sum by (event_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=~\"decision.*|reversal\" [$__interval]))",
-          "legendFormat": "{{event_type}}",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"cue_fired\" [$__interval]))",
+          "legendFormat": "Cues Fired",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": { "mode": "continuous-BlPu" },
           "custom": {
             "drawStyle": "bars",
-            "fillOpacity": 80
+            "fillOpacity": 100,
+            "gradientMode": "scheme",
+            "lineWidth": 0
           }
         }
       }
     },
     {
-      "id": 7,
-      "title": "Recent Cue Events",
+      "id": 15,
+      "title": "Recent Events",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+      "collapsed": false
+    },
+    {
+      "id": 16,
+      "title": "Recent Cue & Decision Events",
       "type": "logs",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 20 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 30 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=~\"cue_.*\"",
+          "expr": "{service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=~\"cue_fired|cue_matched|decision_tradeoff|reversal\"",
           "refId": "A"
         }
       ],
       "options": {
-        "showLabels": true,
+        "showLabels": false,
         "showTime": true,
-        "wrapLogMessage": true
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
       }
     }
   ]
