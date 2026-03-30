@@ -4,6 +4,10 @@
 
 DevOS Observability is built on the Grafana LGTM stack (Loki, Grafana, Tempo, Mimir) with an OpenTelemetry Collector for log ingestion.
 
+**Memgraph (optional):** A separate compose stack under `memgraph-platform/` runs **Memgraph MAGE** (Bolt `7687`) for relationship analytics over the same JSONL sources. Indexes and unique constraints are applied by `memgraph-platform/schema/init_schema.py` (GQLAlchemy). Data persists in the **`memgraph_data`** Docker volume (`/var/lib/memgraph`). Loaders live in `graph_loader/` (`python -m graph_loader.cli`). Example Cypher for dashboards is in `queries/dashboard_queries.cypher`. A minimal read-only HTTP bridge is in `graph_api/` (FastAPI) for Grafana JSON or curl.
+
+See also: `docs/graph-etl-inventory.md`, `docs/privacy-redaction.md`.
+
 ## Components
 
 ### OpenTelemetry Collector (devos-collector)
@@ -97,6 +101,14 @@ Simple Python HTTP server that receives Grafana alerts.
          └──────────────────┘
 ```
 
+Parallel path (Memgraph, same JSONL on disk):
+
+```
+~/.claude/*.jsonl  ──►  graph_loader  ──►  Memgraph (Bolt)
+                              │
+                              └── projects/**/*.jsonl (transcripts, Phase B)
+```
+
 ## Log Schema
 
 ### Structured Metadata
@@ -139,6 +151,7 @@ All data is stored in `data/` subdirectories:
 | `data/alerts/` | Webhook alert log | Manual cleanup |
 | `data/prometheus/` | Metrics (if used) | Default |
 | `data/tempo/` | Traces (if used) | Default |
+| Docker volume `memgraph_data` | Memgraph graph storage (`memgraph-platform` compose) | `docker volume rm` to reset |
 
 ## Network
 

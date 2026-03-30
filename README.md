@@ -61,6 +61,18 @@ open http://localhost:3000
 | devos-collector | - | Log file collector |
 | devos-webhook | 8085 | Alert receiver |
 
+## Memgraph (optional graph analytics)
+
+Relationship analytics over the same `~/.claude` JSONL files:
+
+```bash
+cd memgraph-platform && docker compose up -d --build
+pip install -r graph_loader/requirements.txt
+PYTHONPATH=. python -m graph_loader.cli --phase all
+```
+
+See [memgraph-platform/README.md](memgraph-platform/README.md), [docs/graph-etl-inventory.md](docs/graph-etl-inventory.md), [queries/dashboard_queries.cypher](queries/dashboard_queries.cypher) (aggregates), and [queries/lab_playbook.cypher](queries/lab_playbook.cypher) (Lab-friendly graph exploration).
+
 ## Dashboards
 
 All dashboards are in the **DevOS** folder in Grafana.
