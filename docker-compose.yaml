@@ -5,17 +5,26 @@ services:
     container_name: devos-lgtm
 
     ports:
-      - "3000:3000"
-      - "4317:4317"
-      - "4318:4318"
+      - "3000:3000"   # Grafana
+      - "3100:3100"   # Loki API (for imports)
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
 
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
 
     volumes:
+      # Provisioning (read-only configs)
       - ./grafana/dashboards:/devos-dashboards
       - ./grafana/provisioning/dashboards/devos.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/devos.yaml
       - ./grafana/provisioning/alerting:/otel-lgtm/grafana/conf/provisioning/alerting
+      # Loki config (allows historical data import)
+      - ./loki/loki-config.yaml:/otel-lgtm/loki-config.yaml
+      # Persistent data storage
+      - lgtm-grafana:/data/grafana
+      - lgtm-prometheus:/data/prometheus
+      - lgtm-loki:/data/loki
+      - lgtm-tempo:/data/tempo
 
   devos-collector:
     image: otel/opentelemetry-collector-contrib:latest
@@ -42,3 +51,9 @@ services:
 
     environment:
       ALERTS_FILE: /data/alerts.jsonl
+
+volumes:
+  lgtm-grafana:
+  lgtm-prometheus:
+  lgtm-loki:
+  lgtm-tempo:
