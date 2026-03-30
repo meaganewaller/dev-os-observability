@@ -1,7 +1,7 @@
 {
   "uid": "devos-project-focus",
   "title": "DevOS: Project Focus",
-  "description": "What we work on - projects, file types, and change categories",
+  "description": "What we work on - change types, risk levels, and work patterns",
   "tags": ["devos", "projects", "focus"],
   "timezone": "browser",
   "schemaVersion": 39,
@@ -27,8 +27,8 @@
       "description": "Types of changes: architecture, bugfix, feature, refactor, test, docs",
       "targets": [
         {
-          "expr": "sum by (change_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type!=\"\" [$__range]))",
-          "legendFormat": "{{change_type}}",
+          "expr": "sum by (payload_change_type) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_change_type!=\"\" [$__range]))",
+          "legendFormat": "{{payload_change_type}}",
           "refId": "A"
         }
       ],
@@ -40,6 +40,11 @@
           "values": ["value", "percent"]
         },
         "pieType": "donut"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
       }
     },
     {
@@ -51,8 +56,8 @@
       "description": "Risk levels of file modifications",
       "targets": [
         {
-          "expr": "sum by (risk) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | risk!=\"\" [$__range]))",
-          "legendFormat": "{{risk}}",
+          "expr": "sum by (payload_risk) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_risk!=\"\" [$__range]))",
+          "legendFormat": "{{payload_risk}}",
           "refId": "A"
         }
       ],
@@ -64,19 +69,38 @@
           "values": ["value", "percent"]
         },
         "pieType": "donut"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "low" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "medium" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "high" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
       }
     },
     {
       "id": 4,
-      "title": "Skills Applied",
+      "title": "Test Results",
       "type": "piechart",
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Engineering skills used in changes",
+      "description": "Test run outcomes",
       "targets": [
         {
-          "expr": "sum by (skills) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | skills!=\"\" [$__range]))",
-          "legendFormat": "{{skills}}",
+          "expr": "sum by (payload_result) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" | payload_result!=\"\" [$__range]))",
+          "legendFormat": "{{payload_result}}",
           "refId": "A"
         }
       ],
@@ -88,6 +112,21 @@
           "values": ["value", "percent"]
         },
         "pieType": "donut"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "passed" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "failed" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
       }
     },
     {
@@ -105,33 +144,35 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "fixedColor": "green", "mode": "fixed" },
-          "displayName": "File Writes"
+          "displayName": "File Writes",
+          "noValue": "0"
         }
       }
     },
     {
       "id": 7,
-      "title": "Architecture Changes",
+      "title": "Architecture",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 4, "y": 10 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type=\"architecture\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_change_type=\"architecture\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "fixedColor": "purple", "mode": "fixed" },
-          "displayName": "Architecture"
+          "displayName": "Architecture",
+          "noValue": "0"
         }
       }
     },
@@ -143,78 +184,75 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type=\"bugfix\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_change_type=\"bugfix\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "fixedColor": "red", "mode": "fixed" },
-          "displayName": "Bug Fixes"
+          "displayName": "Bug Fixes",
+          "noValue": "0"
         }
       }
     },
     {
       "id": 9,
-      "title": "Test Changes",
+      "title": "Tests",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 12, "y": 10 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type=\"test\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_change_type=\"test\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "fixedColor": "blue", "mode": "fixed" },
-          "displayName": "Tests"
+          "displayName": "Tests",
+          "noValue": "0"
         }
       }
     },
     {
       "id": 10,
-      "title": "High Risk Changes",
+      "title": "Refactors",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 16, "y": 10 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | risk=\"high\" [$__range]))",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "displayName": "High Risk",
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 10 },
-              { "color": "red", "value": 25 }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 11,
-      "title": "Domain Modeling",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 10 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "targets": [
-        {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"domain_modeling\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_change_type=\"refactor\" [$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "fixedColor": "orange", "mode": "fixed" },
-          "displayName": "Domain Modeling"
+          "displayName": "Refactors",
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Test Runs",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 10 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "cyan", "mode": "fixed" },
+          "displayName": "Test Runs",
+          "noValue": "0"
         }
       }
     },
@@ -233,8 +271,8 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (change_type) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type!=\"\" [$__interval]))",
-          "legendFormat": "{{change_type}}",
+          "expr": "sum by (payload_change_type) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_change_type!=\"\" [$__interval]))",
+          "legendFormat": "{{payload_change_type}}",
           "refId": "A"
         }
       ],
@@ -257,8 +295,8 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (risk) (count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | risk!=\"\" [$__interval]))",
-          "legendFormat": "{{risk}}",
+          "expr": "sum by (payload_risk) (count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_risk!=\"\" [$__interval]))",
+          "legendFormat": "{{payload_risk}}",
           "refId": "A"
         }
       ],
@@ -302,7 +340,7 @@
       "description": "Architecture work as % of total (higher = more strategic work)",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type=\"architecture\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range])) * 100",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_change_type=\"architecture\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) > 0 or vector(1)) * 100",
           "refId": "A"
         }
       ],
@@ -310,13 +348,13 @@
         "defaults": {
           "unit": "percent",
           "min": 0,
-          "max": 100,
+          "max": 50,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "yellow", "value": null },
-              { "color": "green", "value": 20 },
-              { "color": "blue", "value": 40 }
+              { "color": "green", "value": 10 },
+              { "color": "blue", "value": 25 }
             ]
           }
         }
@@ -328,10 +366,10 @@
       "type": "gauge",
       "gridPos": { "h": 5, "w": 6, "x": 6, "y": 24 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Bug fixes as % of total (lower = better quality, or less maintenance)",
+      "description": "Bug fixes as % of total (lower = better quality)",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type=\"bugfix\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range])) * 100",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_change_type=\"bugfix\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) > 0 or vector(1)) * 100",
           "refId": "A"
         }
       ],
@@ -339,13 +377,13 @@
         "defaults": {
           "unit": "percent",
           "min": 0,
-          "max": 100,
+          "max": 50,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "yellow", "value": 30 },
-              { "color": "red", "value": 50 }
+              { "color": "yellow", "value": 20 },
+              { "color": "red", "value": 40 }
             ]
           }
         }
@@ -360,7 +398,36 @@
       "description": "Test changes as % of total (higher = better coverage)",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | change_type=\"test\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range])) * 100",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_change_type=\"test\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) > 0 or vector(1)) * 100",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 50,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 15 },
+              { "color": "green", "value": 25 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 19,
+      "title": "Low Risk Ratio",
+      "type": "gauge",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 24 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Low risk changes as % of total (higher = safer)",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" | payload_risk=\"low\" [$__range])) / (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [$__range])) > 0 or vector(1)) * 100",
           "refId": "A"
         }
       ],
@@ -373,37 +440,8 @@
             "mode": "absolute",
             "steps": [
               { "color": "red", "value": null },
-              { "color": "yellow", "value": 15 },
-              { "color": "green", "value": 30 }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 19,
-      "title": "High Risk Ratio",
-      "type": "gauge",
-      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 24 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "description": "High risk changes as % of total (lower = safer)",
-      "targets": [
-        {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" | risk=\"high\" [$__range])) / sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\" [$__range])) * 100",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 50,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 15 },
-              { "color": "red", "value": 30 }
+              { "color": "yellow", "value": 50 },
+              { "color": "green", "value": 70 }
             ]
           }
         }
@@ -417,7 +455,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{service_name=\"devos\"} | log_source=\"dev-os-events\" | json | event_type=\"tool_write\"",
+          "expr": "{service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\"",
           "refId": "A"
         }
       ],
