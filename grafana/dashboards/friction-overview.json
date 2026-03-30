@@ -1,6 +1,7 @@
 {
   "uid": "devos-friction",
   "title": "DevOS: Friction Overview",
+  "description": "Track tool failures, errors, and friction points to identify improvement opportunities",
   "tags": ["devos", "friction"],
   "timezone": "browser",
   "schemaVersion": 39,
@@ -9,34 +10,267 @@
     "from": "now-7d",
     "to": "now"
   },
-  "templating": {
-    "list": [
-      {
-        "name": "subdomain",
-        "type": "custom",
-        "current": { "text": "All", "value": "$__all" },
-        "options": [
-          { "text": "All", "value": "$__all" },
-          { "text": "resource-limit", "value": "resource-limit" },
-          { "text": "file-not-found", "value": "file-not-found" },
-          { "text": "command-failed", "value": "command-failed" }
-        ],
-        "includeAll": true,
-        "multi": true
-      }
-    ]
-  },
   "panels": [
     {
       "id": 1,
-      "title": "Friction Events Over Time",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "title": "Overview",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "title": "Total Friction Events",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (subdomain) (count_over_time({service_name=\"devos\"} | log_source=\"friction\" | subdomain=~\"$subdomain\" [$__interval]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "red", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "State Errors",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "File not found, resource limits, command failures",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} | json | domain=\"state\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "orange", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Syntax Errors",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Parse errors, invalid syntax",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} | json | domain=\"syntax\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "yellow", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Other Errors",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Type, dependency, permission, network errors",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} | json | domain!=\"state\" | domain!=\"syntax\" | domain!=\"unknown\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "purple", "mode": "fixed" },
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Trends",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "collapsed": false
+    },
+    {
+      "id": 7,
+      "title": "Friction Over Time by Domain",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 6 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (domain) (count_over_time({service_name=\"devos\", log_source=\"friction\"} | json | domain!=\"\" [$__interval]))",
+          "legendFormat": "{{domain}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 30,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "stacking": { "mode": "none" }
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Friction by Domain",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 6 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (domain) (count_over_time({service_name=\"devos\", log_source=\"friction\"} | json | domain!=\"\" [$__range]))",
+          "legendFormat": "{{domain}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "donut"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Breakdown",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "collapsed": false
+    },
+    {
+      "id": 10,
+      "title": "Friction by Tool",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 15 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Which tools encounter the most friction",
+      "targets": [
+        {
+          "expr": "sum by (tool_name) (count_over_time({service_name=\"devos\", log_source=\"friction\"} | json | tool_name!=\"\" [$__range]))",
+          "legendFormat": "{{tool_name}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "donut"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Top Subdomains",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 15 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Specific friction categories",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (subdomain) (count_over_time({service_name=\"devos\", log_source=\"friction\"} | json | subdomain!=\"\" [$__range])))",
           "legendFormat": "{{subdomain}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Resource Limit Tracker",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 15 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Resource-limit errors this week (goal: <50)",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} | json | subdomain=\"resource-limit\" [$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 25 },
+              { "color": "orange", "value": 50 },
+              { "color": "red", "value": 75 }
+            ]
+          },
+          "noValue": "0"
+        }
+      },
+      "options": {
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 13,
+      "title": "Tool Performance",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "collapsed": false
+    },
+    {
+      "id": 14,
+      "title": "Friction by Tool Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 24 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (tool_name) (count_over_time({service_name=\"devos\", log_source=\"friction\"} | json | tool_name!=\"\" [$__interval]))",
+          "legendFormat": "{{tool_name}}",
           "refId": "A"
         }
       ],
@@ -52,80 +286,31 @@
       }
     },
     {
-      "id": 2,
-      "title": "Friction by Subdomain (Total)",
-      "type": "piechart",
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "targets": [
-        {
-          "expr": "sum by (subdomain) (count_over_time({service_name=\"devos\"} | log_source=\"friction\" [$__range]))",
-          "legendFormat": "{{subdomain}}",
-          "refId": "A"
-        }
-      ]
+      "id": 15,
+      "title": "Recent Events",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 },
+      "collapsed": false
     },
     {
-      "id": 3,
-      "title": "Friction by Tool",
-      "type": "piechart",
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "targets": [
-        {
-          "expr": "sum by (tool_name) (count_over_time({service_name=\"devos\"} | log_source=\"friction\" | tool_name!=\"\" [$__range]))",
-          "legendFormat": "{{tool_name}}",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 4,
-      "title": "ADR-0008 Goal Tracker",
-      "type": "stat",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "description": "Resource-limit errors this week vs target (<50)",
-      "targets": [
-        {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"friction\" | subdomain=\"resource-limit\" [7d]))",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 25 },
-              { "color": "red", "value": 50 }
-            ]
-          },
-          "unit": "short"
-        }
-      },
-      "options": {
-        "colorMode": "background"
-      }
-    },
-    {
-      "id": 5,
+      "id": 16,
       "title": "Recent Friction Events",
       "type": "logs",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 16 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 31 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{service_name=\"devos\"} | log_source=\"friction\"",
+          "expr": "{service_name=\"devos\", log_source=\"friction\"} | json",
           "refId": "A"
         }
       ],
       "options": {
-        "showLabels": true,
+        "showLabels": false,
         "showTime": true,
         "wrapLogMessage": true,
-        "dedupStrategy": "none"
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
       }
     }
   ]
