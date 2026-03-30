@@ -18,7 +18,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"friction\" [1w]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} [1w])) or vector(0)",
           "legendFormat": "Friction Events",
           "refId": "A"
         }
@@ -49,12 +49,12 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_write\" [1w]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"tool_write\" [1w])) or vector(0)",
           "legendFormat": "Writes",
           "refId": "A"
         },
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"task_completed\" [1w]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"task_completed\" [1w])) or vector(0)",
           "legendFormat": "Tasks Completed",
           "refId": "B"
         }
@@ -78,13 +78,14 @@
       "description": "Friction events this week",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"friction\" [7d]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} [7d])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "displayName": "This Week",
+          "noValue": "0",
           "color": { "mode": "thresholds" },
           "thresholds": {
             "steps": [
@@ -104,13 +105,14 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"friction\" [7d] offset 7d))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} [7d] offset 7d)) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "displayName": "Last Week",
+          "noValue": "0",
           "color": { "mode": "thresholds" },
           "thresholds": {
             "steps": [
@@ -130,13 +132,14 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"session_start\" [7d]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_start\" [7d])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "displayName": "Sessions",
+          "noValue": "0",
           "color": { "mode": "thresholds" },
           "thresholds": {
             "steps": [{ "color": "blue", "value": null }]
@@ -152,13 +155,14 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"test_run\" [7d]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"test_run\" [7d])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "displayName": "Test Runs",
+          "noValue": "0",
           "color": { "mode": "thresholds" },
           "thresholds": {
             "steps": [{ "color": "purple", "value": null }]
@@ -174,7 +178,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (subdomain) (count_over_time({service_name=\"devos\"} | log_source=\"friction\" [1w]))",
+          "expr": "sum by (subdomain) (count_over_time({service_name=\"devos\", log_source=\"friction\"} | json | subdomain!=\"\" [1w]))",
           "legendFormat": "{{subdomain}}",
           "refId": "A"
         }
@@ -192,14 +196,14 @@
     },
     {
       "id": 8,
-      "title": "Success Rate Trend",
-      "description": "Writes / (Writes + Failures)",
+      "title": "Hook Success Rate Trend",
+      "description": "Percentage of successful hook executions",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_write\" [1d])) / (sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_write\" [1d])) + sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" | event_type=\"tool_failure\" [1d]))) * 100",
+          "expr": "(sum(count_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | status=\"success\" [1d])) / sum(count_over_time({service_name=\"devos\", log_source=\"hook-health\"} [1d])) * 100) or vector(0)",
           "legendFormat": "Success Rate %",
           "refId": "A"
         }
@@ -232,7 +236,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devos\"} | log_source=\"dev-os-events\" [1d]))",
+          "expr": "sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} [1d])) or vector(0)",
           "legendFormat": "Events",
           "refId": "A"
         }
@@ -245,6 +249,109 @@
             "fillOpacity": 60
           }
         }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Week-over-Week Comparison",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 28 },
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "title": "Friction Change",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 29 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Change in friction events vs last week (negative is better)",
+      "targets": [
+        {
+          "expr": "(sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} [7d])) or vector(0)) - (sum(count_over_time({service_name=\"devos\", log_source=\"friction\"} [7d] offset 7d)) or vector(0))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 12,
+      "title": "Sessions Change",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 29 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Change in sessions vs last week",
+      "targets": [
+        {
+          "expr": "(sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_start\" [7d])) or vector(0)) - (sum(count_over_time({service_name=\"devos\", log_source=\"dev-os-events\"} | json | event_type=\"session_start\" [7d] offset 7d)) or vector(0))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0 },
+              { "color": "green", "value": 5 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 13,
+      "title": "Hook Failures Change",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 29 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "description": "Change in hook failures vs last week (negative is better)",
+      "targets": [
+        {
+          "expr": "(sum(count_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | status=\"failure\" [7d])) or vector(0)) - (sum(count_over_time({service_name=\"devos\", log_source=\"hook-health\"} | json | status=\"failure\" [7d] offset 7d)) or vector(0))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
       }
     }
   ]
